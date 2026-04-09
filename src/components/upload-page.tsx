@@ -89,7 +89,7 @@ export function UploadPage() {
       <div className="flex flex-col items-center gap-3">
         <img src="/logo.svg" alt="Max's Book Bindery" className="h-14" />
         <p className="text-muted-foreground">
-          Turn any PDF into a printable saddle-stitched booklet.
+          Turn any PDF into a printable bound book.
         </p>
       </div>
 

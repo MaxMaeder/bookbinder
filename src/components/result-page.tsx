@@ -2,18 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useStore } from "@/store"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Download } from "lucide-react"
-import { computeBookletSheets } from "@/lib/booklet"
+import { computeSheets } from "@/lib/booklet"
 
 export function ResultPage() {
   const resultPdfBytes = useStore((s) => s.resultPdfBytes)
   const sourcePdfName = useStore((s) => s.sourcePdfName)
   const sourcePageCount = useStore((s) => s.sourcePageCount)
+  const config = useStore((s) => s.config)
   const setStep = useStore((s) => s.setStep)
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
 
   const sheetCount = useMemo(
-    () => computeBookletSheets(sourcePageCount).length,
-    [sourcePageCount]
+    () => computeSheets(sourcePageCount, config).length,
+    [sourcePageCount, config]
   )
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export function ResultPage() {
         </Button>
       </header>
 
-      <iframe src={blobUrl} className="flex-1 border-0" title="Booklet PDF" />
+      <iframe src={blobUrl} className="flex-1 border-0" title="Book PDF" />
     </div>
   )
 }

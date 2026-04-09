@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { buildFullBooklet } from "@/lib/pdf-engine"
+import { buildFullBook } from "@/lib/pdf-engine"
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
 
@@ -74,15 +74,15 @@ export function ControlsPanel() {
     if (!sourcePdfBytes) return
     setGenerating(true)
     try {
-      const bytes = await buildFullBooklet(
+      const bytes = await buildFullBook(
         sourcePdfBytes,
         config,
         sourcePageSize
       )
       setResult(bytes)
     } catch (err) {
-      console.error("Failed to generate booklet:", err)
-      alert("Failed to generate booklet. Please try again.")
+      console.error("Failed to generate book:", err)
+      alert("Failed to generate book. Please try again.")
     } finally {
       setGenerating(false)
     }
@@ -111,7 +111,7 @@ export function ControlsPanel() {
     <div className="flex h-full flex-col gap-5 overflow-y-auto p-6">
       <div>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Configure Booklet</h2>
+          <h2 className="text-lg font-semibold">Configure Book</h2>
           <Button variant="ghost" size="sm" onClick={reset}>
             Start Over
           </Button>
@@ -290,7 +290,7 @@ export function ControlsPanel() {
           disabled={generating}
         >
           {generating && <Loader2 className="animate-spin" />}
-          {generating ? "Generating..." : "Generate Booklet"}
+          {generating ? "Generating..." : "Generate Book"}
         </Button>
       </div>
     </div>

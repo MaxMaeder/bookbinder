@@ -81,7 +81,7 @@ export function PreviewPanel() {
           <iframe
             src={blobUrl}
             className="h-full w-full rounded-sm border-0 shadow-lg ring-1 ring-foreground/5"
-            title="Booklet preview"
+            title="Book preview"
           />
         )}
         {rendering && blobUrl && (

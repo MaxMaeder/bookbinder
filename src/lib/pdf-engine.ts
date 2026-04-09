@@ -191,7 +191,7 @@ export async function buildPreviewPage(
   return outputDoc.save({ useObjectStreams: false })
 }
 
-export async function buildFullBooklet(
+export async function buildFullBook(
   sourcePdfBytes: Uint8Array,
   config: BookbinderConfig,
   sourcePageSize: { width: number; height: number }
