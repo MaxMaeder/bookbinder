@@ -149,6 +149,19 @@ export function ControlsPanel() {
       <Separator />
 
       <div className="space-y-3">
+        <Label>Binding Width</Label>
+        <NumberField
+          label="Gap"
+          value={config.bindingWidth}
+          onChange={(v) => updateConfig({ bindingWidth: v })}
+          suffix="in"
+          step={0.05}
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Checkbox
             id="smaller-book"
@@ -222,19 +235,6 @@ export function ControlsPanel() {
             />
           </div>
         )}
-      </div>
-
-      <Separator />
-
-      <div className="space-y-3">
-        <Label>Binding Width</Label>
-        <NumberField
-          label="Gap"
-          value={config.bindingWidth}
-          onChange={(v) => updateConfig({ bindingWidth: v })}
-          suffix="in"
-          step={0.05}
-        />
       </div>
 
       <Separator />
