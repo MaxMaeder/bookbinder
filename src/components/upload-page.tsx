@@ -1,17 +1,21 @@
 import { useCallback, useRef, useState } from "react"
-import { Upload, FileText } from "lucide-react"
+import { Upload, ChevronRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { useStore } from "@/store"
 import { getPdfInfo } from "@/lib/pdf-preview"
 
 const SAMPLES = [
   {
-    name: "Short Story (4 pages)",
-    file: "/samples/sample-short.pdf",
+    name: "Simple Example",
+    file: "/samples/simple.pdf",
   },
   {
-    name: "Longer Document (16 pages)",
-    file: "/samples/sample-long.pdf",
+    name: "The Metamorphosis",
+    file: "/samples/metamorphosis.pdf",
+  },
+  {
+    name: "The Picture of Dorian Gray",
+    file: "/samples/dorian-gray.pdf",
   },
 ]
 
@@ -124,17 +128,17 @@ export function UploadPage() {
         />
       </div>
 
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex w-full max-w-lg flex-col items-center gap-3">
         <p className="text-sm text-muted-foreground">Or try a sample</p>
-        <div className="flex gap-3">
+        <div className="flex w-full flex-col gap-2">
           {SAMPLES.map((sample) => (
             <Card
               key={sample.file}
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-muted"
+              className="flex w-full cursor-pointer flex-row items-center justify-between gap-0 px-4 py-3 transition-colors hover:bg-muted"
               onClick={() => handleSample(sample)}
             >
-              <FileText className="size-5 shrink-0 text-muted-foreground" />
               <span className="text-sm font-medium">{sample.name}</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
             </Card>
           ))}
         </div>

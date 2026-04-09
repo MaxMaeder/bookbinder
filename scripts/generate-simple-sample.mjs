@@ -62,5 +62,4 @@ async function createSample(pageCount, filename) {
   console.log(`Created ${filename} (${pageCount} pages, ${bytes.length} bytes)`)
 }
 
-await createSample(4, "public/samples/sample-short.pdf")
-await createSample(16, "public/samples/sample-long.pdf")
+await createSample(16, "public/samples/simple.pdf")

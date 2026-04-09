@@ -18,8 +18,7 @@ export function MobileGate({ children }: { children: React.ReactNode }) {
         <img src="/logo.svg" alt="Max's Book Bindery" className="h-12" />
         <div className="max-w-sm space-y-2">
           <p className="text-muted-foreground">
-            This app works best on a desktop or laptop computer. Please open it
-            on a larger screen for the full experience.
+            Please open this website on a computer.
           </p>
         </div>
       </div>
