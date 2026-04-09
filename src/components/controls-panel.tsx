@@ -89,7 +89,7 @@ export function ControlsPanel() {
   }
 
   const updateMargin = (
-    side: keyof BookbinderConfig["margins"],
+    side: "top" | "bottom" | "left" | "right",
     value: number
   ) => {
     updateConfig({ margins: { ...config.margins, [side]: value } })
@@ -99,6 +99,12 @@ export function ControlsPanel() {
     partial: Partial<BookbinderConfig["smallerBook"]>
   ) => {
     updateConfig({ smallerBook: { ...config.smallerBook, ...partial } })
+  }
+
+  const updateSignatures = (
+    partial: Partial<BookbinderConfig["signatures"]>
+  ) => {
+    updateConfig({ signatures: { ...config.signatures, ...partial } })
   }
 
   return (
@@ -189,6 +195,38 @@ export function ControlsPanel() {
       <Separator />
 
       <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="signatures"
+            checked={config.signatures.enabled}
+            onCheckedChange={(v) =>
+              updateSignatures({ enabled: v === true })
+            }
+          />
+          <Label htmlFor="signatures">Multiple signatures</Label>
+        </div>
+
+        {config.signatures.enabled && (
+          <div className="space-y-2 pl-6">
+            <NumberField
+              label="Sheets"
+              value={config.signatures.sheetsPerSignature}
+              onChange={(v) =>
+                updateSignatures({
+                  sheetsPerSignature: Math.max(1, Math.round(v)),
+                })
+              }
+              suffix="per sig"
+              min={1}
+              step={1}
+            />
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
         <Label>Binding Width</Label>
         <NumberField
           label="Gap"
@@ -202,33 +240,47 @@ export function ControlsPanel() {
       <Separator />
 
       <div className="space-y-3">
-        <Label>Page Margins</Label>
-        <div className="grid grid-cols-2 gap-2">
-          <NumberField
-            label="Top"
-            value={config.margins.top}
-            onChange={(v) => updateMargin("top", v)}
-            suffix="in"
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="margins"
+            checked={config.margins.enabled}
+            onCheckedChange={(v) =>
+              updateConfig({
+                margins: { ...config.margins, enabled: v === true },
+              })
+            }
           />
-          <NumberField
-            label="Bottom"
-            value={config.margins.bottom}
-            onChange={(v) => updateMargin("bottom", v)}
-            suffix="in"
-          />
-          <NumberField
-            label="Left"
-            value={config.margins.left}
-            onChange={(v) => updateMargin("left", v)}
-            suffix="in"
-          />
-          <NumberField
-            label="Right"
-            value={config.margins.right}
-            onChange={(v) => updateMargin("right", v)}
-            suffix="in"
-          />
+          <Label htmlFor="margins">Additional margins</Label>
         </div>
+
+        {config.margins.enabled && (
+          <div className="grid grid-cols-2 gap-2 pl-6">
+            <NumberField
+              label="Top"
+              value={config.margins.top}
+              onChange={(v) => updateMargin("top", v)}
+              suffix="in"
+            />
+            <NumberField
+              label="Bottom"
+              value={config.margins.bottom}
+              onChange={(v) => updateMargin("bottom", v)}
+              suffix="in"
+            />
+            <NumberField
+              label="Left"
+              value={config.margins.left}
+              onChange={(v) => updateMargin("left", v)}
+              suffix="in"
+            />
+            <NumberField
+              label="Right"
+              value={config.margins.right}
+              onChange={(v) => updateMargin("right", v)}
+              suffix="in"
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-auto pt-4">

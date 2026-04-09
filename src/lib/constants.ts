@@ -24,8 +24,13 @@ export interface BookbinderConfig {
     height: number
     cutLines: boolean
   }
+  signatures: {
+    enabled: boolean
+    sheetsPerSignature: number
+  }
   bindingWidth: number
   margins: {
+    enabled: boolean
     top: number
     bottom: number
     left: number
@@ -41,8 +46,13 @@ export const DEFAULT_CONFIG: BookbinderConfig = {
     height: 5.5,
     cutLines: true,
   },
+  signatures: {
+    enabled: false,
+    sheetsPerSignature: 4,
+  },
   bindingWidth: 0.25,
   margins: {
+    enabled: false,
     top: 0.15,
     bottom: 0.15,
     left: 0.15,

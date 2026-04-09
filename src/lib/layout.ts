@@ -105,10 +105,10 @@ export function calculateLayout(
     height: bookArea.height,
   }
 
-  const ml = inchToPt(config.margins.left)
-  const mr = inchToPt(config.margins.right)
-  const mt = inchToPt(config.margins.top)
-  const mb = inchToPt(config.margins.bottom)
+  const ml = config.margins.enabled ? inchToPt(config.margins.left) : 0
+  const mr = config.margins.enabled ? inchToPt(config.margins.right) : 0
+  const mt = config.margins.enabled ? inchToPt(config.margins.top) : 0
+  const mb = config.margins.enabled ? inchToPt(config.margins.bottom) : 0
 
   const leftContent: Rect = {
     x: leftPanel.x + ml,

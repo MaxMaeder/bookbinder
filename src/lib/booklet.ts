@@ -1,3 +1,5 @@
+import { type BookbinderConfig } from "./constants"
+
 export interface SheetSide {
   /** 1-indexed page number, or 0 for blank */
   left: number
@@ -16,8 +18,13 @@ export interface Sheet {
  * Given a total number of source pages, returns an array of Sheets.
  * Each sheet has a front and back, each holding two page slots.
  * Pages are 1-indexed; 0 means blank (padding).
+ *
+ * @param pageOffset - added to every page number (for multi-signature support)
  */
-export function computeBookletSheets(totalPages: number): Sheet[] {
+export function computeBookletSheets(
+  totalPages: number,
+  pageOffset = 0
+): Sheet[] {
   const padded = Math.ceil(totalPages / 4) * 4
   const sheetCount = padded / 4
   const sheets: Sheet[] = []
@@ -30,17 +37,56 @@ export function computeBookletSheets(totalPages: number): Sheet[] {
 
     sheets.push({
       front: {
-        left: frontLeft <= totalPages ? frontLeft : 0,
-        right: frontRight <= totalPages ? frontRight : 0,
+        left: frontLeft <= totalPages ? frontLeft + pageOffset : 0,
+        right: frontRight <= totalPages ? frontRight + pageOffset : 0,
       },
       back: {
-        left: backLeft <= totalPages ? backLeft : 0,
-        right: backRight <= totalPages ? backRight : 0,
+        left: backLeft <= totalPages ? backLeft + pageOffset : 0,
+        right: backRight <= totalPages ? backRight + pageOffset : 0,
       },
     })
   }
 
   return sheets
+}
+
+/**
+ * Split pages into multiple signatures, each a self-contained saddle-stitch
+ * booklet of up to `sheetsPerSignature` sheets (= sheetsPerSignature * 4 pages).
+ */
+export function computeMultiSignatureSheets(
+  totalPages: number,
+  sheetsPerSignature: number
+): Sheet[] {
+  const pagesPerSignature = sheetsPerSignature * 4
+  const allSheets: Sheet[] = []
+  let remaining = totalPages
+  let offset = 0
+
+  while (remaining > 0) {
+    const sigPages = Math.min(remaining, pagesPerSignature)
+    allSheets.push(...computeBookletSheets(sigPages, offset))
+    offset += sigPages
+    remaining -= sigPages
+  }
+
+  return allSheets
+}
+
+/**
+ * Compute sheets respecting the current config (single or multi-signature).
+ */
+export function computeSheets(
+  totalPages: number,
+  config: BookbinderConfig
+): Sheet[] {
+  if (config.signatures.enabled && config.signatures.sheetsPerSignature > 0) {
+    return computeMultiSignatureSheets(
+      totalPages,
+      config.signatures.sheetsPerSignature
+    )
+  }
+  return computeBookletSheets(totalPages)
 }
 
 /** Flatten sheets into an ordered list of SheetSides (front, back, front, back, ...) */
@@ -63,8 +109,11 @@ export interface PreviewInfo {
  * Pick a representative sheet side from near the middle of the book.
  * Prefers the front of the middle sheet so both page slots are filled.
  */
-export function getPreviewSide(totalPages: number): PreviewInfo {
-  const sheets = computeBookletSheets(totalPages)
+export function getPreviewSide(
+  totalPages: number,
+  config: BookbinderConfig
+): PreviewInfo {
+  const sheets = computeSheets(totalPages, config)
   if (sheets.length === 0) {
     return { side: { left: 0, right: 0 }, sheetIndex: 0, isFront: true }
   }

@@ -16,8 +16,8 @@ export function PreviewPanel() {
   const prevUrlRef = useRef<string | null>(null)
 
   const preview = useMemo(
-    () => getPreviewSide(sourcePageCount),
-    [sourcePageCount]
+    () => getPreviewSide(sourcePageCount, config),
+    [sourcePageCount, config]
   )
 
   const renderPreview = useCallback(async () => {

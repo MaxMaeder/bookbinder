@@ -9,7 +9,7 @@ import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs"
 import { type BookbinderConfig } from "./constants"
 import { calculateLayout, type LayoutResult } from "./layout"
 import {
-  computeBookletSheets,
+  computeSheets,
   flattenSheets,
   type SheetSide,
 } from "./booklet"
@@ -202,7 +202,7 @@ export async function buildFullBooklet(
   const totalPages = tempDoc.getPageCount()
 
   const outputDoc = await PDFDocument.create()
-  const sheets = computeBookletSheets(totalPages)
+  const sheets = computeSheets(totalPages, config)
   const sides = flattenSheets(sheets)
 
   const pageNums = collectNeededPages(sides)
