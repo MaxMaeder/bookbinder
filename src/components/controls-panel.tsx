@@ -77,7 +77,8 @@ export function ControlsPanel() {
       const bytes = await buildFullBooklet(
         sourcePdfBytes,
         config,
-        sourcePageSize
+        sourcePageSize,
+        sourcePdfName
       )
       setResult(bytes)
     } catch (err) {

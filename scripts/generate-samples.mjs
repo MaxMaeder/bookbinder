@@ -10,14 +10,6 @@ async function createSample(pageCount, filename) {
     const page = doc.addPage([612, 792]) // US Letter portrait
     const { width, height } = page.getSize()
 
-    // Light background tint alternating
-    if (i % 2 === 0) {
-      page.drawRectangle({
-        x: 0, y: 0, width, height,
-        color: rgb(0.97, 0.97, 1),
-      })
-    }
-
     // Border
     page.drawRectangle({
       x: 36, y: 36, width: width - 72, height: height - 72,

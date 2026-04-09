@@ -27,9 +27,8 @@ export function ResultPage() {
   const handleDownload = useCallback(() => {
     if (!blobUrl) return
     const a = document.createElement("a")
-    const baseName = sourcePdfName.replace(/\.pdf$/i, "")
     a.href = blobUrl
-    a.download = `${baseName}-booklet.pdf`
+    a.download = `Bound ${sourcePdfName}`
     a.click()
   }, [blobUrl, sourcePdfName])
 

@@ -5,6 +5,7 @@ import { buildPreviewPage } from "@/lib/pdf-engine"
 export function PreviewPanel() {
   const config = useStore((s) => s.config)
   const sourcePdfBytes = useStore((s) => s.sourcePdfBytes)
+  const sourcePdfName = useStore((s) => s.sourcePdfName)
   const sourcePageSize = useStore((s) => s.sourcePageSize)
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [rendering, setRendering] = useState(false)
@@ -23,7 +24,8 @@ export function PreviewPanel() {
       const pdfBytes = await buildPreviewPage(
         sourcePdfBytes,
         config,
-        sourcePageSize
+        sourcePageSize,
+        sourcePdfName
       )
 
       if (renderId !== renderIdRef.current) return
@@ -43,7 +45,7 @@ export function PreviewPanel() {
         setRendering(false)
       }
     }
-  }, [sourcePdfBytes, config, sourcePageSize])
+  }, [sourcePdfBytes, sourcePdfName, config, sourcePageSize])
 
   useEffect(() => {
     const timeout = setTimeout(renderPreview, 200)

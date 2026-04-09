@@ -1,4 +1,11 @@
-import { PDFDocument, PDFEmbeddedPage, rgb, LineCapStyle } from "pdf-lib"
+import {
+  PDFDocument,
+  type PDFEmbeddedPage,
+  type PDFImage,
+  rgb,
+  LineCapStyle,
+} from "pdf-lib"
+import * as pdfjsLib from "pdfjs-dist"
 import { type BookbinderConfig } from "./constants"
 import { calculateLayout, type LayoutResult } from "./layout"
 import {
@@ -7,9 +14,83 @@ import {
   type SheetSide,
 } from "./booklet"
 
-async function renderSide(
+type PageAsset =
+  | { kind: "vector"; page: PDFEmbeddedPage }
+  | { kind: "raster"; image: PDFImage }
+
+const RASTER_DPI = 200
+const RASTER_SCALE = RASTER_DPI / 72
+
+function copyBytes(src: Uint8Array): Uint8Array {
+  const copy = new Uint8Array(src.length)
+  copy.set(src)
+  return copy
+}
+
+async function tryEmbedVector(
+  sourcePdfBytes: Uint8Array,
+  outputDoc: PDFDocument
+): Promise<PageAsset[] | null> {
+  try {
+    const sourceDoc = await PDFDocument.load(copyBytes(sourcePdfBytes))
+    const embedded = await outputDoc.embedPages(sourceDoc.getPages())
+    return embedded.map((page) => ({ kind: "vector", page }))
+  } catch {
+    return null
+  }
+}
+
+async function embedRaster(
+  sourcePdfBytes: Uint8Array,
+  totalPages: number,
+  outputDoc: PDFDocument
+): Promise<PageAsset[]> {
+  const loadingTask = pdfjsLib.getDocument({
+    data: copyBytes(sourcePdfBytes),
+  })
+  const pdf = await loadingTask.promise
+  const assets: PageAsset[] = []
+
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdf.getPage(i)
+    const viewport = page.getViewport({ scale: RASTER_SCALE })
+
+    const canvas = document.createElement("canvas")
+    canvas.width = Math.floor(viewport.width)
+    canvas.height = Math.floor(viewport.height)
+
+    await page.render({ canvas, viewport }).promise
+
+    const blob = await new Promise<Blob>((resolve) =>
+      canvas.toBlob((b) => resolve(b!), "image/png")
+    )
+    const arrayBuf = await blob.arrayBuffer()
+    const image = await outputDoc.embedPng(new Uint8Array(arrayBuf))
+    assets.push({ kind: "raster", image })
+  }
+
+  pdf.destroy()
+  return assets
+}
+
+function drawPageAsset(
+  outputPage: ReturnType<PDFDocument["addPage"]>,
+  asset: PageAsset,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  if (asset.kind === "vector") {
+    outputPage.drawPage(asset.page, { x, y, width, height })
+  } else {
+    outputPage.drawImage(asset.image, { x, y, width, height })
+  }
+}
+
+function renderSide(
   outputDoc: PDFDocument,
-  embeddedPages: PDFEmbeddedPage[],
+  assets: PageAsset[],
   side: SheetSide,
   layout: LayoutResult
 ) {
@@ -29,52 +110,65 @@ async function renderSide(
     })
   }
 
-  const pages: [number, typeof layout.leftPage][] = [
+  const placements: [number, typeof layout.leftPage][] = [
     [side.left, layout.leftPage],
     [side.right, layout.rightPage],
   ]
 
-  for (const [pageNum, placement] of pages) {
+  for (const [pageNum, placement] of placements) {
     if (pageNum === 0 || !placement.rect.width) continue
 
-    const embedded = embeddedPages[pageNum - 1]
-    if (!embedded) continue
+    const asset = assets[pageNum - 1]
+    if (!asset) continue
 
-    page.drawPage(embedded, {
-      x: placement.rect.x,
-      y: placement.rect.y,
-      width: placement.rect.width,
-      height: placement.rect.height,
-    })
+    drawPageAsset(
+      page,
+      asset,
+      placement.rect.x,
+      placement.rect.y,
+      placement.rect.width,
+      placement.rect.height
+    )
   }
-
-  return page
 }
 
-function copyBytes(src: Uint8Array): Uint8Array {
-  const copy = new Uint8Array(src.length)
-  copy.set(src)
-  return copy
+async function getAssets(
+  sourcePdfBytes: Uint8Array,
+  totalPages: number,
+  outputDoc: PDFDocument
+): Promise<PageAsset[]> {
+  const vector = await tryEmbedVector(sourcePdfBytes, outputDoc)
+  if (vector) return vector
+  return embedRaster(sourcePdfBytes, totalPages, outputDoc)
 }
 
 export async function buildPreviewPage(
   sourcePdfBytes: Uint8Array,
   config: BookbinderConfig,
-  sourcePageSize: { width: number; height: number }
+  sourcePageSize: { width: number; height: number },
+  sourceName?: string
 ): Promise<Uint8Array> {
-  const sourceDoc = await PDFDocument.load(copyBytes(sourcePdfBytes))
   const outputDoc = await PDFDocument.create()
+  if (sourceName) outputDoc.setTitle(`Preview ${sourceName}`)
 
-  const totalPages = sourceDoc.getPageCount()
-  const sheets = computeBookletSheets(totalPages)
-  const sides = flattenSheets(sheets)
+  const tempDoc = await PDFDocument.load(copyBytes(sourcePdfBytes), {
+    ignoreEncryption: true,
+  })
+  const totalPages = tempDoc.getPageCount()
 
-  const embeddedPages = await outputDoc.embedPages(sourceDoc.getPages())
+  const allSheets = computeBookletSheets(totalPages)
+  const sides = flattenSheets(allSheets)
+
+  if (sides.length === 0) return outputDoc.save({ useObjectStreams: false })
+
+  const firstSide = sides[0]
+  const neededNums = [firstSide.left, firstSide.right].filter((p) => p > 0)
+  const maxNeeded = Math.max(...neededNums, 0)
+
+  const assets = await getAssets(sourcePdfBytes, maxNeeded, outputDoc)
   const layout = calculateLayout(config, sourcePageSize)
 
-  if (sides.length > 0) {
-    await renderSide(outputDoc, embeddedPages, sides[0], layout)
-  }
+  renderSide(outputDoc, assets, firstSide, layout)
 
   return outputDoc.save({ useObjectStreams: false })
 }
@@ -82,20 +176,24 @@ export async function buildPreviewPage(
 export async function buildFullBooklet(
   sourcePdfBytes: Uint8Array,
   config: BookbinderConfig,
-  sourcePageSize: { width: number; height: number }
+  sourcePageSize: { width: number; height: number },
+  sourceName?: string
 ): Promise<Uint8Array> {
-  const sourceDoc = await PDFDocument.load(copyBytes(sourcePdfBytes))
-  const outputDoc = await PDFDocument.create()
+  const tempDoc = await PDFDocument.load(copyBytes(sourcePdfBytes), {
+    ignoreEncryption: true,
+  })
+  const totalPages = tempDoc.getPageCount()
 
-  const totalPages = sourceDoc.getPageCount()
+  const outputDoc = await PDFDocument.create()
+  if (sourceName) outputDoc.setTitle(`Bound ${sourceName}`)
   const sheets = computeBookletSheets(totalPages)
   const sides = flattenSheets(sheets)
 
-  const embeddedPages = await outputDoc.embedPages(sourceDoc.getPages())
+  const assets = await getAssets(sourcePdfBytes, totalPages, outputDoc)
   const layout = calculateLayout(config, sourcePageSize)
 
   for (const side of sides) {
-    await renderSide(outputDoc, embeddedPages, side, layout)
+    renderSide(outputDoc, assets, side, layout)
   }
 
   return outputDoc.save({ useObjectStreams: false })
