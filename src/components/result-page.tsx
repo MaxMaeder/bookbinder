@@ -18,7 +18,7 @@ export function ResultPage() {
 
   useEffect(() => {
     if (!resultPdfBytes) return
-    const blob = new Blob([resultPdfBytes], { type: "application/pdf" })
+    const blob = new Blob([resultPdfBytes as BlobPart], { type: "application/pdf" })
     const url = URL.createObjectURL(blob)
     setBlobUrl(url)
     return () => URL.revokeObjectURL(url)

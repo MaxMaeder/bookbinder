@@ -31,7 +31,7 @@ export function PreviewPanel() {
       if (renderId !== renderIdRef.current) return
 
       if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
-      const blob = new Blob([pdfBytes], { type: "application/pdf" })
+      const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" })
       const url = URL.createObjectURL(blob)
       prevUrlRef.current = url
       setBlobUrl(url)
