@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react"
-import { BookOpen, Upload, FileText } from "lucide-react"
+import { Upload, FileText } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { useStore } from "@/store"
 import { getPdfInfo } from "@/lib/pdf-preview"
@@ -83,10 +83,7 @@ export function UploadPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-10 p-8">
       <div className="flex flex-col items-center gap-3">
-        <BookOpen className="size-10 text-primary" />
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Max&apos;s Book Bindery
-        </h1>
+        <img src="/logo.svg" alt="Max's Book Bindery" className="h-14" />
         <p className="text-muted-foreground">
           Turn any PDF into a printable saddle-stitched booklet.
         </p>

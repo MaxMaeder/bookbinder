@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react"
+import { Loader2 } from "lucide-react"
 import { useStore } from "@/store"
 import { buildPreviewPage } from "@/lib/pdf-engine"
 import { getPreviewSide } from "@/lib/booklet"
@@ -71,7 +72,7 @@ export function PreviewPanel() {
 
   return (
     <div className="relative flex h-full flex-col bg-muted/30">
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="relative flex-1 flex items-center justify-center p-4">
         {rendering && !blobUrl && (
           <p className="text-sm text-muted-foreground">Rendering...</p>
         )}
@@ -82,6 +83,14 @@ export function PreviewPanel() {
             className="h-full w-full rounded-sm border-0 shadow-lg ring-1 ring-foreground/5"
             title="Booklet preview"
           />
+        )}
+        {rendering && blobUrl && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
+            <div className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 shadow-sm ring-1 ring-foreground/10">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Updating...</span>
+            </div>
+          </div>
         )}
       </div>
       <p className="px-4 pb-3 text-xs text-muted-foreground">
