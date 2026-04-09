@@ -1,17 +1,23 @@
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { useStore } from "@/store"
 import { buildPreviewPage } from "@/lib/pdf-engine"
+import { getPreviewSide } from "@/lib/booklet"
 
 export function PreviewPanel() {
   const config = useStore((s) => s.config)
   const sourcePdfBytes = useStore((s) => s.sourcePdfBytes)
-  const sourcePdfName = useStore((s) => s.sourcePdfName)
   const sourcePageSize = useStore((s) => s.sourcePageSize)
+  const sourcePageCount = useStore((s) => s.sourcePageCount)
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [rendering, setRendering] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const renderIdRef = useRef(0)
   const prevUrlRef = useRef<string | null>(null)
+
+  const preview = useMemo(
+    () => getPreviewSide(sourcePageCount),
+    [sourcePageCount]
+  )
 
   const renderPreview = useCallback(async () => {
     if (!sourcePdfBytes) return
@@ -25,13 +31,15 @@ export function PreviewPanel() {
         sourcePdfBytes,
         config,
         sourcePageSize,
-        sourcePdfName
+        preview.side
       )
 
       if (renderId !== renderIdRef.current) return
 
       if (prevUrlRef.current) URL.revokeObjectURL(prevUrlRef.current)
-      const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" })
+      const blob = new Blob([pdfBytes as BlobPart], {
+        type: "application/pdf",
+      })
       const url = URL.createObjectURL(blob)
       prevUrlRef.current = url
       setBlobUrl(url)
@@ -45,7 +53,7 @@ export function PreviewPanel() {
         setRendering(false)
       }
     }
-  }, [sourcePdfBytes, sourcePdfName, config, sourcePageSize])
+  }, [sourcePdfBytes, config, sourcePageSize, preview.side])
 
   useEffect(() => {
     const timeout = setTimeout(renderPreview, 200)
@@ -58,21 +66,29 @@ export function PreviewPanel() {
     }
   }, [])
 
+  const leftLabel = preview.side.left > 0 ? preview.side.left : "blank"
+  const rightLabel = preview.side.right > 0 ? preview.side.right : "blank"
+
   return (
-    <div className="relative flex h-full items-center justify-center bg-muted/30 p-4">
-      {rendering && !blobUrl && (
-        <p className="text-sm text-muted-foreground">Rendering...</p>
-      )}
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
-      {blobUrl && (
-        <iframe
-          src={blobUrl}
-          className="h-full w-full rounded-sm border-0 shadow-lg ring-1 ring-foreground/5"
-          title="Booklet preview"
-        />
-      )}
+    <div className="relative flex h-full flex-col bg-muted/30">
+      <div className="flex-1 flex items-center justify-center p-4">
+        {rendering && !blobUrl && (
+          <p className="text-sm text-muted-foreground">Rendering...</p>
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {blobUrl && (
+          <iframe
+            src={blobUrl}
+            className="h-full w-full rounded-sm border-0 shadow-lg ring-1 ring-foreground/5"
+            title="Booklet preview"
+          />
+        )}
+      </div>
+      <p className="px-4 pb-3 text-xs text-muted-foreground">
+        Previewing sheet {preview.sheetIndex + 1} (
+        {preview.isFront ? "front" : "back"}) &mdash; pages {leftLabel} and{" "}
+        {rightLabel}
+      </p>
     </div>
   )
 }

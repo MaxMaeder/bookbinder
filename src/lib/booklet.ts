@@ -52,3 +52,29 @@ export function flattenSheets(sheets: Sheet[]): SheetSide[] {
   }
   return sides
 }
+
+export interface PreviewInfo {
+  side: SheetSide
+  sheetIndex: number
+  isFront: boolean
+}
+
+/**
+ * Pick a representative sheet side from near the middle of the book.
+ * Prefers the front of the middle sheet so both page slots are filled.
+ */
+export function getPreviewSide(totalPages: number): PreviewInfo {
+  const sheets = computeBookletSheets(totalPages)
+  if (sheets.length === 0) {
+    return { side: { left: 0, right: 0 }, sheetIndex: 0, isFront: true }
+  }
+  const midIdx = Math.floor(sheets.length / 2)
+  const sheet = sheets[midIdx]
+  const useFront =
+    sheet.front.left > 0 && sheet.front.right > 0
+  return {
+    side: useFront ? sheet.front : sheet.back,
+    sheetIndex: midIdx,
+    isFront: useFront,
+  }
+}
